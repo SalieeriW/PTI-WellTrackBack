@@ -24,10 +24,21 @@ import {
   delete_account,
   updateUserSettings,
 } from "./routes/user_conf";
+import { cors } from "hono/cors";
 
 dotenv.config();
 
 const app = new OpenAPIHono();
+
+app.use(
+  "*",
+  cors({
+    origin: "http://localhost:3000", // Specify the frontend's origin
+    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"], // Allow OPTIONS for preflight
+    allowedHeaders: ["Content-Type", "Authorization"],
+    credentials: true, // If you're using cookies or credentials
+  })
+);
 
 // app.openapi(route, (c) => {
 //   return c.json({ id: "1", username: "John Doe", password: "examplePassword" });
