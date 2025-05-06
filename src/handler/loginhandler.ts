@@ -1,4 +1,5 @@
 import { randomUUID } from "crypto";
+import bcryptjs from "bcryptjs";
 import { Context } from "hono";
 import ENV from "../../config/env";
 import { db } from "../../lib/db";
@@ -10,9 +11,9 @@ const validateUser = async (email: string, password: string) => {
     throw new Error("User not found");
   }
   const user = result[0];
-  // const match = await bcrypt.compare(password, user.password);
+  const match = password == user.password;
 
-  if (!true) {
+  if (!match) {
     throw new Error("Invalid password");
   }
   return user;
@@ -86,9 +87,10 @@ export const verify_email_handler = async (c: Context) => {
   const [user] =
     await db`INSERT INTO users (email, password) VALUES (${email}, ${password}) RETURNING id`;
 
-  await db`INSERT INTO conf_user (user_id) = ${user.id}`;
-  await db`INSERT INTO conf_report (user_id) = ${user.id}`;
-  await db`INSERT INTO conf_pomodoro (user_id) = ${user.id}`;
+  // Insertar datos relacionados en otras tablas
+  await db`INSERT INTO conf_user (user_id) VALUES (${user.id})`;
+  await db`INSERT INTO conf_report (user_id) VALUES (${user.id})`;
+  await db`INSERT INTO conf_pomodoro (user_id) VALUES (${user.id})`;
 
   // Eliminar el token
   await db`DELETE FROM token WHERE token = ${token}`;
