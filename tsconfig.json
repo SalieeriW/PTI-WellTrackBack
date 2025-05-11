@@ -1,9 +1,9 @@
 {
   "compilerOptions": {
     "strict": true,
-    "esModuleInterop": true,
+    "jsx": "react-jsx",
+    "jsxImportSource": "hono/jsx",
     "resolveJsonModule": true,
-    "moduleResolution": "node",
-    "types": ["node"]
+    "esModuleInterop": true
   }
 }
