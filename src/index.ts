@@ -49,4 +49,7 @@ app.route("/api/dashboard", dashboardHandler); // Handles /analyze/:id etc.
 app.route("/api/challenges", challengeHandler); // Handles smart task/challenges
 app.route("/api/generalSettings", globalSettingsHandler); // Handles /settings/:id
 
-export default app;
+export default {
+  port: 3001, // <-- Set Bun port here
+  fetch: app.fetch,
+};
