@@ -5,9 +5,17 @@ import dashboardHandler from "./routes/dashboardHandler";
 import challengeHandler from "./routes/challengeHandler";
 import globalSettingsHandler from "./routes/globalSettingsHandler";
 import openapi from "../openapi.json";
+import { cors } from "hono/cors";
+import activityHandler from "./routes/activityHandler";
 
 const app = new Hono();
-
+app.use(
+  "*",
+  cors({
+    origin: "http://localhost:3000",
+    credentials: true,
+  })
+);
 app.get("/openapi.json", (c) => c.json(openapi));
 /**
  * @openapi
@@ -48,6 +56,7 @@ app.route("/api/auth", authHandler); // Handles /register, /login
 app.route("/api/dashboard", dashboardHandler); // Handles /analyze/:id etc.
 app.route("/api/challenges", challengeHandler); // Handles smart task/challenges
 app.route("/api/generalSettings", globalSettingsHandler); // Handles /settings/:id
+app.route("/api/activity", activityHandler); // Handles /settings/:id
 
 export default {
   port: 3001, // <-- Set Bun port here

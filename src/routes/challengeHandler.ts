@@ -25,7 +25,7 @@ app.get("/:id", async (c) => {
 
   const { data, error } = await supabase
     .from("CHALLENGES")
-    .select("name, description, progress, meta, metric")
+    .select("*")
     .eq("user_id", id);
 
   if (error) {
@@ -68,7 +68,8 @@ app.post("/settings/:id", async (c) => {
     .from("CHALLENGE_SETTINGS")
     .update(body)
     .eq("user_id", id)
-    .select("*");
+    .select("*")
+    .single();
 
   if (error) {
     return c.json({ error: error.message }, 500);
@@ -99,7 +100,8 @@ app.get("/settings/:id", async (c) => {
   const { data, error } = await supabase
     .from("CHALLENGE_SETTINGS")
     .select("*")
-    .eq("user_id", id);
+    .eq("user_id", id)
+    .single();
 
   if (error) {
     return c.json({ error: error.message }, 500);
@@ -147,7 +149,8 @@ app.patch("/:id/:id2", async (c) => {
     .update(body)
     .eq("user_id", id)
     .eq("id", id2)
-    .select("*");
+    .select("*")
+    .single();
 
   if (error) {
     return c.json({ error: error.message }, 500);
@@ -181,6 +184,51 @@ app.delete("/:id/:id2", async (c) => {
   const { id } = c.req.param();
   const { id2 } = c.req.param();
 
+  const { data, error } = await supabase
+    .from("CHALLENGES")
+    .delete()
+    .eq("user_id", id)
+    .eq("id", id2);
+
+  if (error) {
+    return c.json({ error: error.message }, 500);
+  }
+  return c.json("Challenge deleted successfully");
+});
+
+app.get("/:id/:id2", async (c) => {
+  const { id } = c.req.param();
+  const { id2 } = c.req.param();
+
+  const { data, error } = await supabase
+    .from("CHALLENGES")
+    .select("*")
+    .eq("user_id", id)
+    .eq("id", id2)
+    .single();
+
+  if (error) {
+    return c.json({ error: error.message }, 500);
+  }
+  return c.json(data);
+});
+
+app.post("/:id", async (c) => {
+  const { id } = c.req.param();
+  const body = await c.req.json();
+  const { data, error } = await supabase
+    .from("CHALLENGES")
+    .insert([{ ...body, user_id: id }]);
+  if (error) {
+    return c.json({ error: error.message }, 500);
+  }
+
+  return c.json("Challenge created successfully");
+});
+
+app.delete("/:id/:id2", async (c) => {
+  const { id } = c.req.param();
+  const { id2 } = c.req.param();
   const { data, error } = await supabase
     .from("CHALLENGES")
     .delete()

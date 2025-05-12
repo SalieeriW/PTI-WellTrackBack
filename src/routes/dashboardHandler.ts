@@ -118,10 +118,10 @@ app.get("/:id", async (c) => {
     });
 
     const drinkingCounts = past7Days.map((day) => {
-      const count = weeklyData.filter(
+      const value = weeklyData.filter(
         (entry) => entry.is_drinking && entry.created_at.startsWith(day)
       ).length;
-      return { day, count };
+      return { day, value };
     });
 
     summaryData = { ...summaryData, weeklyDrinking: drinkingCounts };
@@ -129,7 +129,7 @@ app.get("/:id", async (c) => {
 
   const { data: challengesData, error: challengesError } = await supabase
     .from("CHALLENGES")
-    .select("progress")
+    .select("progress, name")
     .gte("created_at", new Date(new Date().setHours(0, 0, 0, 0)).toISOString())
     .eq("user_id", id);
 

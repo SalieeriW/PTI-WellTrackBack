@@ -130,13 +130,14 @@ app.post("/register", async (c) => {
  *       400:
  *         description: Failed to update name
  */
-app.post("/change_name", async (c) => {
-  const { user_id, firstname, lastname } = await c.req.json();
+app.post("/change_name/:id", async (c) => {
+  const { firstname, lastname } = await c.req.json();
+  const { id } = c.req.param();
 
   const { data, error } = await supabase
     .from("USERS")
     .update({ firstname, lastname })
-    .eq("user_id", user_id)
+    .eq("user_id", id)
     .select("firstname, lastname");
 
   if (error) {
@@ -175,13 +176,14 @@ app.post("/change_name", async (c) => {
  *       400:
  *         description: Failed to update password
  */
-app.post("/change_password", async (c) => {
-  const { user_id, old_password, new_password } = await c.req.json();
+app.post("/change_password/:id", async (c) => {
+  const { old_password, new_password } = await c.req.json();
+  const { id } = c.req.param();
 
   const { data: user, error: fetchError } = await supabase
     .from("USERS")
     .select("password")
-    .eq("user_id", user_id)
+    .eq("user_id", id)
     .single();
 
   if (fetchError || !user) {
@@ -195,7 +197,7 @@ app.post("/change_password", async (c) => {
   const { error: updateError } = await supabase
     .from("USERS")
     .update({ password: new_password })
-    .eq("user_id", user_id);
+    .eq("user_id", id);
 
   if (updateError) {
     return c.json({ error: "Failed to update password" }, 400);

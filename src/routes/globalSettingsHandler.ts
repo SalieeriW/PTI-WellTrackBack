@@ -36,7 +36,8 @@ app.get("/:id", async (c) => {
   const { data, error } = await supabase
     .from("GENERAL_SETTINGS")
     .select("*")
-    .eq("user_id", id);
+    .eq("user_id", id)
+    .limit(1);
 
   if (error) {
     return c.json({ error: error.message }, 500);
@@ -81,7 +82,6 @@ app.post("/:id", async (c) => {
     .update(body)
     .eq("user_id", id)
     .select("*");
-
   if (error) {
     return c.json({ error: error.message }, 500);
   }
