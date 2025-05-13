@@ -37,14 +37,31 @@ const app = new Hono();
  *       500:
  *         description: Failed to calibrate
  */
-app.get("/calibrate", async (c) => {
+app.post("/calibrate", async (c) => {
   try {
-    const response = await axios.post(process.env.MLBASE_URL + "/calibrate", {
-      image: (await c.req.parseBody())?.image,
+    const body = await c.req.parseBody();
+    const image = body?.image;
+
+    if (!image || !(image instanceof File)) {
+      return c.json({ error: "No se recibió imagen válida" }, 400);
+    }
+
+    const form = new FormData();
+    form.append(
+      "image",
+      new Blob([await image.arrayBuffer()], { type: image.type }),
+      image.name
+    );
+
+    const response = await fetch(`http://ml:5000/calibrate`, {
+      method: "POST",
+      body: form, // ✅ multipart/form-data automático
     });
-    return c.json(response.data);
-  } catch (error) {
-    console.error(error);
+
+    const result = await response.json();
+    return c.json(result);
+  } catch (err) {
+    console.error("❌ Error en /calibrate:", err);
     return c.json({ error: "Failed to fetch calibration data" }, 500);
   }
 });
@@ -83,11 +100,29 @@ app.get("/calibrate", async (c) => {
 app.post("/analyze/:id", async (c) => {
   try {
     const { id } = c.req.param();
-    const response = await axios.post(process.env.MLBASE_URL + "/analyze", {
-      image: (await c.req.parseBody())?.image,
+    const body = await c.req.parseBody();
+    const image = body?.image;
+
+    if (!image || !(image instanceof File)) {
+      return c.json({ error: "No se recibió imagen válida" }, 400);
+    }
+
+    // Enviar imagen al servidor ML como multipart/form-data
+    const form = new FormData();
+    form.append(
+      "image",
+      new Blob([await image.arrayBuffer()], { type: image.type }),
+      image.name
+    );
+
+    const response = await fetch(`http://ml:5000/analyze`, {
+      method: "POST",
+      body: form,
     });
 
-    const data = response.data;
+    const data = await response.json();
+
+    console.log("ML response:", data);
 
     const parsedData = {
       user_id: id,
@@ -97,14 +132,74 @@ app.post("/analyze/:id", async (c) => {
       fingers: data.finger_count,
     };
 
-    const { error } = await supabase.from("DATALOG").insert(parsedData);
+    console.log("Parsed data:", parsedData);
 
+    const { error } = await supabase.from("DATALOG").insert({
+      user_id: parseInt(parsedData.user_id),
+      is_tired: parsedData.is_tired,
+      is_drinking: parsedData.is_drinking,
+      is_badpos: parsedData.is_badpos,
+    });
     if (error) {
       return c.json({ error: "Failed to update database" }, 500);
     }
-    return c.json({ message: "Data processed and stored successfully" });
+
+    // Ejecutar RPCs según análisis
+    const rpcErrors: string[] = [];
+
+    if (parsedData.is_tired) {
+      const { error } = await supabase.rpc("increment_challenge_progress", {
+        metricname: "fatigue",
+        userid: id,
+      });
+      if (error) rpcErrors.push("fatigue");
+    }
+
+    if (parsedData.is_drinking) {
+      const { error } = await supabase.rpc("increment_challenge_progress", {
+        metricname: "drink",
+        userid: id,
+      });
+      if (error) rpcErrors.push("drink");
+    }
+
+    if (parsedData.is_badpos) {
+      const { error } = await supabase.rpc("increment_challenge_progress", {
+        metricname: "bad_posture",
+        userid: id,
+      });
+      if (error) rpcErrors.push("bad_posture");
+    }
+
+    // Activar challenge por conteo de dedos
+    if (parsedData.fingers) {
+      const { data: finger, error: fingerError } = await supabase
+        .from("CHALLENGES")
+        .update({ started: true })
+        .eq("user_id", id)
+        .eq("fingers", parsedData.fingers)
+        .select("name");
+
+      if (fingerError) {
+        return c.json(
+          { error: "Failed to update challenges for finger count" },
+          500
+        );
+      }
+
+      return c.json({
+        finger,
+        updated: true,
+        rpcErrors,
+      });
+    }
+
+    return c.json({
+      message: "Data processed and stored successfully",
+      rpcErrors,
+    });
   } catch (error) {
-    console.error(error);
+    console.error("❌ Error en /analyze:", error);
     return c.json({ error: "Failed to analyze data" }, 500);
   }
 });

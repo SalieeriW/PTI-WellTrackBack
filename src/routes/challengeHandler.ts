@@ -155,6 +155,18 @@ app.patch("/:id/:id2", async (c) => {
   if (error) {
     return c.json({ error: error.message }, 500);
   }
+
+  if (data.progress >= data.meta) {
+    const { error: updateError } = await supabase
+      .from("CHALLENGES")
+      .update({ completed: true })
+      .eq("user_id", id)
+      .eq("id", id2);
+
+    if (updateError) {
+      return c.json({ error: updateError.message }, 500);
+    }
+  }
   return c.json(data);
 });
 
@@ -224,21 +236,6 @@ app.post("/:id", async (c) => {
   }
 
   return c.json("Challenge created successfully");
-});
-
-app.delete("/:id/:id2", async (c) => {
-  const { id } = c.req.param();
-  const { id2 } = c.req.param();
-  const { data, error } = await supabase
-    .from("CHALLENGES")
-    .delete()
-    .eq("user_id", id)
-    .eq("id", id2);
-
-  if (error) {
-    return c.json({ error: error.message }, 500);
-  }
-  return c.json("Challenge deleted successfully");
 });
 
 export default app;

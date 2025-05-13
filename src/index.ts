@@ -7,6 +7,9 @@ import globalSettingsHandler from "./routes/globalSettingsHandler";
 import openapi from "../openapi.json";
 import { cors } from "hono/cors";
 import activityHandler from "./routes/activityHandler";
+import cronHandler from "./routes/cronHandler";
+import metricHandler from "./routes/metricHandler";
+import mlHandler from "./routes/mlHandler";
 
 const app = new Hono();
 app.use(
@@ -57,8 +60,31 @@ app.route("/api/dashboard", dashboardHandler); // Handles /analyze/:id etc.
 app.route("/api/challenges", challengeHandler); // Handles smart task/challenges
 app.route("/api/generalSettings", globalSettingsHandler); // Handles /settings/:id
 app.route("/api/activity", activityHandler); // Handles /settings/:id
+app.route("/api/cron", cronHandler); // Handles /settings/:id
+app.route("/api/metrics", metricHandler); // Handles /metrics
+app.route("/api/ml", mlHandler); // Handles /metrics
 
 export default {
   port: 3001, // <-- Set Bun port here
   fetch: app.fetch,
 };
+
+setTimeout(() => {
+  fetch("http://localhost:3001/api/cron/send-emails")
+    .then((res) => res.text())
+    .then((data) => {
+      console.log("🔥 Cron auto-ejecutado al iniciar:", data);
+    })
+    .catch((err) => {
+      console.error("❌ Error llamando al cron al iniciar:", err);
+    });
+
+  fetch("http://localhost:3001/api/cron/cleanup-logs")
+    .then((res) => res.text())
+    .then((data) => {
+      console.log("🧹 Cron de limpieza ejecutado al iniciar:", data);
+    })
+    .catch((err) => {
+      console.error("❌ Error al ejecutar cron de limpieza:", err);
+    });
+}, 1000); // espera 1 segundo

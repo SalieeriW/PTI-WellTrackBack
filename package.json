@@ -8,6 +8,7 @@
     "@supabase/supabase-js": "^2.49.4",
     "axios": "^1.9.0",
     "hono": "^4.7.9",
+    "resend": "^4.5.1",
     "supabase": "^2.22.12"
   },
   "devDependencies": {
