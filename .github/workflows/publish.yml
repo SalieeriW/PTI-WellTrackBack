@@ -47,12 +47,17 @@ jobs:
           labels: |
             org.opencontainers.image.source=https://github.com/${{ github.repository }}
 
-      - name: Checkout GitOps repo (via HTTPS)
+      - name: Set up SSH for GitOps repo
+        uses: webfactory/ssh-agent@v0.9.0
+        with:
+          ssh-private-key: ${{ secrets.GIT_DEPLOY_KEY }}
+
+      - name: Checkout GitOps repo via SSH
         uses: actions/checkout@v4
         with:
           repository: ${{ steps.lower.outputs.owner }}/PTI-WellTrackGitOps
           path: gitops
-          token: ${{ secrets.GITHUB_TOKEN }}
+          ssh-key: ${{ secrets.GIT_DEPLOY_KEY }}
 
       - name: Update image tag in GitOps repo
         run: |
