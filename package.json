@@ -2,8 +2,8 @@
   "name": "welltrack",
   "version": "1.0.0",
   "scripts": {
-    "dev": "bun --hot src/index.ts",
-    "start": "bun src/index.ts"
+    "dev": "node src/index.ts",
+    "start": "node src/index.ts"
   },
   "dependencies": {
     "@scalar/hono-api-reference": "0.5.35",
