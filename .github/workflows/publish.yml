@@ -1,0 +1,41 @@
+name: PTI-WellTrackBack
+
+on:
+  push:
+    branches:
+      - main # Puedes cambiar a la rama que quieras
+  workflow_dispatch: # Permite lanzarlo manualmente desde la UI
+
+jobs:
+  build-and-push:
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Extract image name
+        id: meta
+        run: |
+          OWNER=$(echo "${{ github.repository_owner }}" | tr '[:upper:]' '[:lower:]')
+          IMAGE_NAME="ghcr.io/$OWNER/welltrack-backend"
+          echo "image_name=$IMAGE_NAME" >> $GITHUB_OUTPUT
+
+      - name: Build Docker image
+        run: |
+          docker build -t ${{ steps.meta.outputs.image_name }}:latest .
+
+      - name: Push Docker image
+        run: |
+          docker push ${{ steps.meta.outputs.image_name }}:latest
