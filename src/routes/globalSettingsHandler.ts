@@ -37,7 +37,7 @@ app.get("/:id", async (c) => {
     .from("GENERAL_SETTINGS")
     .select("*")
     .eq("user_id", id)
-    .limit(1);
+    .single();
 
   if (error) {
     return c.json({ error: error.message }, 500);

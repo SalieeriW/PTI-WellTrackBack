@@ -129,9 +129,10 @@ app.get("/:id", async (c) => {
 
   const { data: challengesData, error: challengesError } = await supabase
     .from("CHALLENGES")
-    .select("progress, name")
+    .select("meta, name")
     .gte("created_at", new Date(new Date().setHours(0, 0, 0, 0)).toISOString())
-    .eq("user_id", id);
+    .eq("user_id", id)
+    .eq("completed", true);
 
   if (challengesError) {
     return c.json({ error: challengesError.message }, 500);

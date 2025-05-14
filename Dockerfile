@@ -9,7 +9,7 @@ WORKDIR /app
 COPY ./package.json ./
 
 # Install dependencies with Bun
-RUN bun install
+RUN npm install --force
 
 # Copy the rest of the backend files
 COPY . .

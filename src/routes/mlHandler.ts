@@ -195,8 +195,9 @@ app.post("/analyze/:id", async (c) => {
     }
 
     return c.json({
-      message: "Data processed and stored successfully",
+      message: "Data analyzed and stored successfully",
       rpcErrors,
+      parsedData,
     });
   } catch (error) {
     console.error("❌ Error en /analyze:", error);
