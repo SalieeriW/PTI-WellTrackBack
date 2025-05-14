@@ -1,21 +1,20 @@
-# Backend Dockerfile
-FROM oven/bun:latest
+# Usa la imagen oficial de Node.js
+FROM node:18
 
-
-# Set working directory
+# Establecer el directorio de trabajo
 WORKDIR /app
 
-# Copy bun.lockb and package.json (if available)
-COPY ./package.json ./
+# Copiar archivos de dependencias
+COPY package.json package-lock.json* ./
 
-# Install dependencies with Bun
+# Instalar las dependencias
 RUN npm install --force
 
-# Copy the rest of the backend files
+# Copiar el resto del código fuente
 COPY . .
 
-# Expose the backend port
+# Exponer el puerto del backend
 EXPOSE 3001
 
-# Start the backend server
-CMD ["bun", "run", "dev"]
+# Iniciar el servidor (ajusta si usas otro script)
+CMD ["npm", "run", "dev"]
