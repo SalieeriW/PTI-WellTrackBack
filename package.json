@@ -1,6 +1,7 @@
 {
   "name": "welltrack",
   "version": "1.0.0",
+  "type": "module",
   "scripts": {
     "dev": "node src/index.ts",
     "start": "node src/index.ts"
