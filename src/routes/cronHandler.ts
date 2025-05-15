@@ -1,6 +1,6 @@
 import { Hono } from "hono";
-import { supabase } from "../lib/supabase";
-import { sendEmail } from "../lib/send-email";
+import { supabase } from "../lib/supabase.js";
+import { sendEmail } from "../lib/send-email.js";
 
 const app = new Hono();
 

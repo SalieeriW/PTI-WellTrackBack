@@ -1,5 +1,5 @@
 import { Hono } from "hono";
-import { supabase } from "../lib/supabase";
+import { supabase } from "../lib/supabase.js";
 import axios from "axios";
 
 const app = new Hono();

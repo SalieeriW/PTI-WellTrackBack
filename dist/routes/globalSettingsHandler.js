@@ -1,8 +1,6 @@
 import { Hono } from "hono";
 import { supabase } from "../lib/supabase.js";
-
 const app = new Hono();
-
 /**
  * @openapi
  * /api/generalSettings/{id}:
@@ -31,20 +29,17 @@ const app = new Hono();
  *         description: Server error
  */
 app.get("/:id", async (c) => {
-  const { id } = c.req.param();
-
-  const { data, error } = await supabase
-    .from("GENERAL_SETTINGS")
-    .select("*")
-    .eq("user_id", id)
-    .single();
-
-  if (error) {
-    return c.json({ error: error.message }, 500);
-  }
-  return c.json(data);
+    const { id } = c.req.param();
+    const { data, error } = await supabase
+        .from("GENERAL_SETTINGS")
+        .select("*")
+        .eq("user_id", id)
+        .single();
+    if (error) {
+        return c.json({ error: error.message }, 500);
+    }
+    return c.json(data);
 });
-
 /**
  * @openapi
  * /api/generalSettings/{id}:
@@ -74,18 +69,16 @@ app.get("/:id", async (c) => {
  *         description: Server error
  */
 app.post("/:id", async (c) => {
-  const { id } = c.req.param();
-  const body = await c.req.json();
-
-  const { data, error } = await supabase
-    .from("GENERAL_SETTINGS")
-    .update(body)
-    .eq("user_id", id)
-    .select("*");
-  if (error) {
-    return c.json({ error: error.message }, 500);
-  }
-  return c.json(data);
+    const { id } = c.req.param();
+    const body = await c.req.json();
+    const { data, error } = await supabase
+        .from("GENERAL_SETTINGS")
+        .update(body)
+        .eq("user_id", id)
+        .select("*");
+    if (error) {
+        return c.json({ error: error.message }, 500);
+    }
+    return c.json(data);
 });
-
 export default app;

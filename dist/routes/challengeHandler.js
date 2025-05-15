@@ -1,8 +1,6 @@
 import { Hono } from "hono";
 import { supabase } from "../lib/supabase.js";
-
 const app = new Hono();
-
 /**
  * @openapi
  * /api/dashboard/{id}:
@@ -21,19 +19,16 @@ const app = new Hono();
  *         description: Internal server error
  */
 app.get("/:id", async (c) => {
-  const { id } = c.req.param();
-
-  const { data, error } = await supabase
-    .from("CHALLENGES")
-    .select("*")
-    .eq("user_id", id);
-
-  if (error) {
-    return c.json({ error: error.message }, 500);
-  }
-  return c.json(data);
+    const { id } = c.req.param();
+    const { data, error } = await supabase
+        .from("CHALLENGES")
+        .select("*")
+        .eq("user_id", id);
+    if (error) {
+        return c.json({ error: error.message }, 500);
+    }
+    return c.json(data);
 });
-
 /**
  * @openapi
  * /api/dashboard/settings/{id}:
@@ -61,22 +56,19 @@ app.get("/:id", async (c) => {
  *         description: Internal server error
  */
 app.post("/settings/:id", async (c) => {
-  const { id } = c.req.param();
-  const body = await c.req.json();
-
-  const { data, error } = await supabase
-    .from("CHALLENGE_SETTINGS")
-    .update(body)
-    .eq("user_id", id)
-    .select("*")
-    .single();
-
-  if (error) {
-    return c.json({ error: error.message }, 500);
-  }
-  return c.json(data);
+    const { id } = c.req.param();
+    const body = await c.req.json();
+    const { data, error } = await supabase
+        .from("CHALLENGE_SETTINGS")
+        .update(body)
+        .eq("user_id", id)
+        .select("*")
+        .single();
+    if (error) {
+        return c.json({ error: error.message }, 500);
+    }
+    return c.json(data);
 });
-
 /**
  * @openapi
  * /api/dashboard/settings/{id}:
@@ -95,20 +87,17 @@ app.post("/settings/:id", async (c) => {
  *         description: Internal server error
  */
 app.get("/settings/:id", async (c) => {
-  const { id } = c.req.param();
-
-  const { data, error } = await supabase
-    .from("CHALLENGE_SETTINGS")
-    .select("*")
-    .eq("user_id", id)
-    .single();
-
-  if (error) {
-    return c.json({ error: error.message }, 500);
-  }
-  return c.json(data);
+    const { id } = c.req.param();
+    const { data, error } = await supabase
+        .from("CHALLENGE_SETTINGS")
+        .select("*")
+        .eq("user_id", id)
+        .single();
+    if (error) {
+        return c.json({ error: error.message }, 500);
+    }
+    return c.json(data);
 });
-
 /**
  * @openapi
  * /api/dashboard/{id}/{id2}:
@@ -140,36 +129,31 @@ app.get("/settings/:id", async (c) => {
  *         description: Internal server error
  */
 app.patch("/:id/:id2", async (c) => {
-  const { id } = c.req.param();
-  const { id2 } = c.req.param();
-  const body = await c.req.json();
-
-  const { data, error } = await supabase
-    .from("CHALLENGES")
-    .update(body)
-    .eq("user_id", id)
-    .eq("id", id2)
-    .select("*")
-    .single();
-
-  if (error) {
-    return c.json({ error: error.message }, 500);
-  }
-
-  if (data.progress >= data.meta) {
-    const { error: updateError } = await supabase
-      .from("CHALLENGES")
-      .update({ completed: true })
-      .eq("user_id", id)
-      .eq("id", id2);
-
-    if (updateError) {
-      return c.json({ error: updateError.message }, 500);
+    const { id } = c.req.param();
+    const { id2 } = c.req.param();
+    const body = await c.req.json();
+    const { data, error } = await supabase
+        .from("CHALLENGES")
+        .update(body)
+        .eq("user_id", id)
+        .eq("id", id2)
+        .select("*")
+        .single();
+    if (error) {
+        return c.json({ error: error.message }, 500);
     }
-  }
-  return c.json(data);
+    if (data.progress >= data.meta) {
+        const { error: updateError } = await supabase
+            .from("CHALLENGES")
+            .update({ completed: true })
+            .eq("user_id", id)
+            .eq("id", id2);
+        if (updateError) {
+            return c.json({ error: updateError.message }, 500);
+        }
+    }
+    return c.json(data);
 });
-
 /**
  * @openapi
  * /api/dashboard/{id}/{id2}:
@@ -193,49 +177,41 @@ app.patch("/:id/:id2", async (c) => {
  *         description: Internal server error
  */
 app.delete("/:id/:id2", async (c) => {
-  const { id } = c.req.param();
-  const { id2 } = c.req.param();
-
-  const { data, error } = await supabase
-    .from("CHALLENGES")
-    .delete()
-    .eq("user_id", id)
-    .eq("id", id2);
-
-  if (error) {
-    return c.json({ error: error.message }, 500);
-  }
-  return c.json("Challenge deleted successfully");
+    const { id } = c.req.param();
+    const { id2 } = c.req.param();
+    const { data, error } = await supabase
+        .from("CHALLENGES")
+        .delete()
+        .eq("user_id", id)
+        .eq("id", id2);
+    if (error) {
+        return c.json({ error: error.message }, 500);
+    }
+    return c.json("Challenge deleted successfully");
 });
-
 app.get("/:id/:id2", async (c) => {
-  const { id } = c.req.param();
-  const { id2 } = c.req.param();
-
-  const { data, error } = await supabase
-    .from("CHALLENGES")
-    .select("*")
-    .eq("user_id", id)
-    .eq("id", id2)
-    .single();
-
-  if (error) {
-    return c.json({ error: error.message }, 500);
-  }
-  return c.json(data);
+    const { id } = c.req.param();
+    const { id2 } = c.req.param();
+    const { data, error } = await supabase
+        .from("CHALLENGES")
+        .select("*")
+        .eq("user_id", id)
+        .eq("id", id2)
+        .single();
+    if (error) {
+        return c.json({ error: error.message }, 500);
+    }
+    return c.json(data);
 });
-
 app.post("/:id", async (c) => {
-  const { id } = c.req.param();
-  const body = await c.req.json();
-  const { data, error } = await supabase
-    .from("CHALLENGES")
-    .insert([{ ...body, user_id: id }]);
-  if (error) {
-    return c.json({ error: error.message }, 500);
-  }
-
-  return c.json("Challenge created successfully");
+    const { id } = c.req.param();
+    const body = await c.req.json();
+    const { data, error } = await supabase
+        .from("CHALLENGES")
+        .insert([{ ...body, user_id: id }]);
+    if (error) {
+        return c.json({ error: error.message }, 500);
+    }
+    return c.json("Challenge created successfully");
 });
-
 export default app;
