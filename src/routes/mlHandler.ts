@@ -53,7 +53,7 @@ app.post("/calibrate", async (c) => {
       image.name
     );
 
-    const response = await fetch(`http://ml:5000/calibrate`, {
+    const response = await fetch(`https://ml.welltrack.local/calibrate`, {
       method: "POST",
       body: form, // ✅ multipart/form-data automático
     });
@@ -115,7 +115,7 @@ app.post("/analyze/:id", async (c) => {
       image.name
     );
 
-    const response = await fetch(`http://ml:5000/analyze`, {
+    const response = await fetch(`https://ml.welltrack.local/analyze`, {
       method: "POST",
       body: form,
     });
