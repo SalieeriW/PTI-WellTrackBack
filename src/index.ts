@@ -23,7 +23,7 @@ const app = new Hono();
 app.use(
   "*",
   cors({
-    origin: "http://app.welltrack.local",
+    origin: "https://app.welltrack.local",
     credentials: true,
   })
 );
