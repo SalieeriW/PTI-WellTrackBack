@@ -16,4 +16,17 @@ app.post("/:id", async (c) => {
   return c.json("Activity logged successfully");
 });
 
+app.post("/rest/:id", async (c) => {
+  const { id } = c.req.param();
+
+  const { error } = await supabase.rpc("increment_challenge_progress", {
+    metricname: "rest",
+    userid: id,
+  });
+  if (error) {
+    return c.json({ error: error.message }, 500);
+  }
+  return c.json("Activity logged successfully");
+});
+
 export default app;
