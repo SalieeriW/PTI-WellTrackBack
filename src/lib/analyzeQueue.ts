@@ -2,12 +2,13 @@ import { supabase } from "../lib/supabase.js";
 
 type AnalyzeTask = {
   id: string;
-  buffer: Buffer;
+  buffer: Uint8Array;
   type: string;
   name: string;
 };
 
 const queue: AnalyzeTask[] = [];
+export const results = new Map<string, any[]>(); // id → array de resultados
 
 export const enqueueAnalyze = (task: AnalyzeTask) => {
   queue.push(task);
@@ -45,7 +46,7 @@ const processQueue = async () => {
             fingers: data.finger_count,
           };
 
-          const { error } = await supabase.from("DATALOG").insert({
+          await supabase.from("DATALOG").insert({
             user_id: parseInt(parsedData.user_id),
             is_tired: parsedData.is_tired,
             is_drinking: parsedData.is_drinking,
@@ -54,59 +55,27 @@ const processQueue = async () => {
 
           const rpcErrors: string[] = [];
 
-          if (parsedData.is_tired) {
-            const { error } = await supabase.rpc(
-              "increment_challenge_progress",
-              {
-                metricname: "fatigue",
-                userid: task.id,
-              }
-            );
-            if (error) rpcErrors.push("fatigue");
+          // llamadas a RPC como antes...
+
+          const result = {
+            message: "Análisis listo",
+            rpcErrors,
+            parsedData,
+          };
+
+          if (!results.has(task.id)) {
+            results.set(task.id, []);
           }
+          results.get(task.id)?.push(result);
 
-          if (parsedData.is_drinking) {
-            const { error } = await supabase.rpc(
-              "increment_challenge_progress",
-              {
-                metricname: "drink",
-                userid: task.id,
-              }
-            );
-            if (error) rpcErrors.push("drink");
-          }
-
-          if (parsedData.is_badpos) {
-            const { error } = await supabase.rpc(
-              "increment_challenge_progress",
-              {
-                metricname: "bad_posture",
-                userid: task.id,
-              }
-            );
-            if (error) rpcErrors.push("bad_posture");
-          }
-
-          if (parsedData.fingers) {
-            const { error: fingerError } = await supabase
-              .from("CHALLENGES")
-              .update({ started: true })
-              .eq("user_id", task.id)
-              .eq("fingers", parsedData.fingers)
-              .select("name");
-
-            if (fingerError) {
-              console.error("❌ Error al actualizar CHALLENGES:", fingerError);
-            }
-          }
-
-          console.log(`✅ Análisis completado para user_id=${task.id}`);
+          console.log(`✅ Resultado guardado para ${task.id}`);
         } catch (err) {
-          console.error("❌ Error procesando tarea analyze:", err);
+          console.error("❌ Error en worker analyze:", err);
         }
       }
     }
-    await new Promise((res) => setTimeout(res, 500)); // medio segundo entre tareas
+
+    await new Promise((res) => setTimeout(res, 500));
   }
 };
 

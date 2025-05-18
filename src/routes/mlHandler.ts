@@ -1,7 +1,7 @@
 import { Hono } from "hono";
 import { supabase } from "../lib/supabase.js";
 import axios from "axios";
-import { enqueueAnalyze } from "../lib/analyzeQueue.js";
+import { enqueueAnalyze, results } from "../lib/analyzeQueue.js";
 
 const app = new Hono();
 
@@ -106,6 +106,15 @@ app.post("/calibrate", async (c) => {
 app.post("/analyze/:id", async (c) => {
   try {
     const { id } = c.req.param();
+
+    // Devuelve el primer resultado pendiente
+    const userResults = results.get(id);
+    if (userResults && userResults.length > 0) {
+      const result = userResults.shift(); // elimina y devuelve
+      return c.json({ cached: true, ...result });
+    }
+
+    // Si no hay resultado, procesamos la imagen
     const body = await c.req.parseBody();
     const image = body?.image as Blob & { name: string; type: string };
 
@@ -120,7 +129,7 @@ app.post("/analyze/:id", async (c) => {
       );
     }
 
-    const buffer = Buffer.from(await image.arrayBuffer());
+    const buffer = new Uint8Array(await image.arrayBuffer());
 
     enqueueAnalyze({
       id,
