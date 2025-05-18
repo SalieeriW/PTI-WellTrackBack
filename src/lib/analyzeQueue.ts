@@ -55,7 +55,47 @@ const processQueue = async () => {
 
           const rpcErrors: string[] = [];
 
-          // llamadas a RPC como antes...
+          if (parsedData.is_tired) {
+            const { error } = await supabase.rpc(
+              "increment_challenge_progress",
+              {
+                metricname: "fatigue",
+                userid: task.id,
+              }
+            );
+            if (error) rpcErrors.push("fatigue");
+          }
+
+          if (parsedData.is_drinking) {
+            const { error } = await supabase.rpc(
+              "increment_challenge_progress",
+              {
+                metricname: "drink",
+                userid: task.id,
+              }
+            );
+            if (error) rpcErrors.push("drink");
+          }
+
+          if (parsedData.is_badpos) {
+            const { error } = await supabase.rpc(
+              "increment_challenge_progress",
+              {
+                metricname: "bad_posture",
+                userid: task.id,
+              }
+            );
+            if (error) rpcErrors.push("bad_posture");
+          }
+
+          if (parsedData.fingers) {
+            await supabase
+              .from("CHALLENGES")
+              .update({ started: true })
+              .eq("user_id", task.id)
+              .eq("fingers", parsedData.fingers)
+              .select("name");
+          }
 
           const result = {
             message: "Análisis listo",
