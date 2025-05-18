@@ -52,10 +52,13 @@ app.post("/calibrate", async (c) => {
       image.name
     );
 
-    const response = await fetch("https://ml.welltrack.local/calibrate", {
-      method: "POST",
-      body: form,
-    });
+    const response = await fetch(
+      "http://welltrack-ml.welltrack.svc.cluster.local:5000/calibrate",
+      {
+        method: "POST",
+        body: form,
+      }
+    );
 
     const result = await response.json();
     return c.json(result);
@@ -122,10 +125,13 @@ app.post("/analyze/:id", async (c) => {
       image.name
     );
 
-    const response = await fetch("https://ml.welltrack.local/analyze", {
-      method: "POST",
-      body: form,
-    });
+    const response = await fetch(
+      "http://welltrack-ml.welltrack.svc.cluster.local:5000/analyze",
+      {
+        method: "POST",
+        body: form,
+      }
+    );
 
     const data = await response.json();
 
