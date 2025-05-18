@@ -7,7 +7,7 @@ const app = new Hono();
 /**
  * @openapi
  * /api/dashboard/calibrate:
- *   get:
+ *   post:
  *     summary: Trigger ML calibration using an image
  *     description: |
  *       Sends a calibration image to the external ML service to compute baseline posture and facial feature metrics.
@@ -24,26 +24,25 @@ const app = new Hono();
  *     responses:
  *       200:
  *         description: Calibration data response
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               example:
- *                 calibration_values:
- *                   ear: 0.3
- *                   mar: 0.2
- *                   neck_straight: 12
- *                   shoulder_angle: 5
+ *       400:
+ *         description: Invalid image
  *       500:
  *         description: Failed to calibrate
  */
 app.post("/calibrate", async (c) => {
   try {
     const body = await c.req.parseBody();
-    const image = body?.image;
+    const image = body?.image as Blob & { name: string; type: string };
 
-    if (!image || !(image instanceof File)) {
-      return c.json({ error: "No se recibió imagen válida" }, 400);
+    if (
+      !image ||
+      typeof image.arrayBuffer !== "function" ||
+      !["image/jpeg", "image/png"].includes(image.type)
+    ) {
+      return c.json(
+        { error: "Imagen no válida. Solo se aceptan JPG o PNG." },
+        400
+      );
     }
 
     const form = new FormData();
@@ -53,9 +52,9 @@ app.post("/calibrate", async (c) => {
       image.name
     );
 
-    const response = await fetch(`https://ml.welltrack.local/calibrate`, {
+    const response = await fetch("https://ml.welltrack.local/calibrate", {
       method: "POST",
-      body: form, // ✅ multipart/form-data automático
+      body: form,
     });
 
     const result = await response.json();
@@ -94,6 +93,8 @@ app.post("/calibrate", async (c) => {
  *     responses:
  *       200:
  *         description: Data analyzed and stored
+ *       400:
+ *         description: Invalid image
  *       500:
  *         description: Error in processing or storing data
  */
@@ -101,13 +102,19 @@ app.post("/analyze/:id", async (c) => {
   try {
     const { id } = c.req.param();
     const body = await c.req.parseBody();
-    const image = body?.image;
+    const image = body?.image as Blob & { name: string; type: string };
 
-    if (!image || !(image instanceof File)) {
-      return c.json({ error: "No se recibió imagen válida" }, 400);
+    if (
+      !image ||
+      typeof image.arrayBuffer !== "function" ||
+      !["image/jpeg", "image/png"].includes(image.type)
+    ) {
+      return c.json(
+        { error: "Imagen no válida. Solo se aceptan JPG o PNG." },
+        400
+      );
     }
 
-    // Enviar imagen al servidor ML como multipart/form-data
     const form = new FormData();
     form.append(
       "image",
@@ -115,14 +122,12 @@ app.post("/analyze/:id", async (c) => {
       image.name
     );
 
-    const response = await fetch(`https://ml.welltrack.local/analyze`, {
+    const response = await fetch("https://ml.welltrack.local/analyze", {
       method: "POST",
       body: form,
     });
 
     const data = await response.json();
-
-    console.log("ML response:", data);
 
     const parsedData = {
       user_id: id,
@@ -132,19 +137,17 @@ app.post("/analyze/:id", async (c) => {
       fingers: data.finger_count,
     };
 
-    console.log("Parsed data:", parsedData);
-
     const { error } = await supabase.from("DATALOG").insert({
       user_id: parseInt(parsedData.user_id),
       is_tired: parsedData.is_tired,
       is_drinking: parsedData.is_drinking,
       is_badpos: parsedData.is_badpos,
     });
+
     if (error) {
       return c.json({ error: "Failed to update database" }, 500);
     }
 
-    // Ejecutar RPCs según análisis
     const rpcErrors: string[] = [];
 
     if (parsedData.is_tired) {
@@ -171,7 +174,6 @@ app.post("/analyze/:id", async (c) => {
       if (error) rpcErrors.push("bad_posture");
     }
 
-    // Activar challenge por conteo de dedos
     if (parsedData.fingers) {
       const { data: finger, error: fingerError } = await supabase
         .from("CHALLENGES")
