@@ -31,7 +31,10 @@ app.get("/:id", async (c) => {
     .eq("completed", true)
     .is("pdf_url", null);
 
-  if (challenges) {
+  console.log("Challenges:", challenges);
+  console.log("Error:", error);
+
+  if (challenges && !error) {
     // 2. For each, generate and upload PDF
     const { PDFDocument, StandardFonts, rgb } = await import("pdf-lib");
 
