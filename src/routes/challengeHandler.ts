@@ -74,7 +74,7 @@ app.get("/:id", async (c) => {
 
       // 3. Upload to Supabase Storage
       const { data: uploaded, error: uploadError } = await supabase.storage
-        .from("certificates")
+        .from("challenges")
         .upload(fileName, pdfBytes, {
           contentType: "application/pdf",
           upsert: true,
@@ -86,7 +86,7 @@ app.get("/:id", async (c) => {
       }
 
       const publicUrl = supabase.storage
-        .from("certificates")
+        .from("challenges")
         .getPublicUrl(fileName).data.publicUrl;
 
       // 4. Update challenge row
