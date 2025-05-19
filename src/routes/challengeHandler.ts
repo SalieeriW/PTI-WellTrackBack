@@ -26,77 +26,75 @@ app.get("/:id", async (c) => {
   // 1. Get all completed challenges with no PDF
   const { data: challenges, error } = await supabase
     .from("CHALLENGES")
-    .select("id, name, description, completed_at")
+    .select("id, name, description")
     .eq("user_id", id)
     .eq("completed", true)
     .is("pdf_url", null);
 
-  if (error || !challenges || challenges.length === 0) {
-    return c.json({ message: "No completed challenges without PDF" }, 200);
-  }
+  if (challenges) {
+    // 2. For each, generate and upload PDF
+    const { PDFDocument, StandardFonts, rgb } = await import("pdf-lib");
 
-  // 2. For each, generate and upload PDF
-  const { PDFDocument, StandardFonts, rgb } = await import("pdf-lib");
+    for (const challenge of challenges) {
+      const pdfDoc = await PDFDocument.create();
+      const page = pdfDoc.addPage([600, 400]);
+      const font = await pdfDoc.embedFont(StandardFonts.Helvetica);
+      const { width, height } = page.getSize();
 
-  for (const challenge of challenges) {
-    const pdfDoc = await PDFDocument.create();
-    const page = pdfDoc.addPage([600, 400]);
-    const font = await pdfDoc.embedFont(StandardFonts.Helvetica);
-    const { width, height } = page.getSize();
+      const title = `Certificado de desafío completado`;
+      const lines = [
+        `Usuario: ${id}`,
+        `Desafío: ${challenge.name}`,
+        `Descripción: ${challenge.description || "Sin descripción."}`,
+        `Comentarios: Integración futura con IA`,
+      ];
 
-    const title = `Certificado de desafío completado`;
-    const lines = [
-      `Usuario: ${id}`,
-      `Desafío: ${challenge.name}`,
-      `Fecha de finalización: ${new Date(challenge.completed_at).toLocaleDateString()}`,
-      `Descripción: ${challenge.description || "Sin descripción."}`,
-    ];
-
-    page.drawText(title, {
-      x: 50,
-      y: height - 60,
-      size: 20,
-      font,
-      color: rgb(0, 0, 0),
-    });
-    lines.forEach((line, i) => {
-      page.drawText(line, {
+      page.drawText(title, {
         x: 50,
-        y: height - 100 - i * 25,
-        size: 14,
+        y: height - 60,
+        size: 20,
         font,
         color: rgb(0, 0, 0),
       });
-    });
-
-    const pdfBytes = await pdfDoc.save();
-    const fileName = `${id}_${challenge.name}_certificado.pdf`;
-
-    // 3. Upload to Supabase Storage
-    const { data: uploaded, error: uploadError } = await supabase.storage
-      .from("certificates")
-      .upload(fileName, pdfBytes, {
-        contentType: "application/pdf",
-        upsert: true,
+      lines.forEach((line, i) => {
+        page.drawText(line, {
+          x: 50,
+          y: height - 100 - i * 25,
+          size: 14,
+          font,
+          color: rgb(0, 0, 0),
+        });
       });
 
-    if (uploadError) {
-      console.error("Upload failed:", uploadError);
-      continue;
-    }
+      const pdfBytes = await pdfDoc.save();
+      const fileName = `${id}_${challenge.name}_certificado.pdf`;
 
-    const publicUrl = supabase.storage
-      .from("certificates")
-      .getPublicUrl(fileName).data.publicUrl;
+      // 3. Upload to Supabase Storage
+      const { data: uploaded, error: uploadError } = await supabase.storage
+        .from("certificates")
+        .upload(fileName, pdfBytes, {
+          contentType: "application/pdf",
+          upsert: true,
+        });
 
-    // 4. Update challenge row
-    const { error: updateError } = await supabase
-      .from("CHALLENGES")
-      .update({ pdf_url: publicUrl })
-      .eq("id", challenge.id);
+      if (uploadError) {
+        console.error("Upload failed:", uploadError);
+        continue;
+      }
 
-    if (updateError) {
-      console.error("Update failed:", updateError);
+      const publicUrl = supabase.storage
+        .from("certificates")
+        .getPublicUrl(fileName).data.publicUrl;
+
+      // 4. Update challenge row
+      const { error: updateError } = await supabase
+        .from("CHALLENGES")
+        .update({ pdf_url: publicUrl })
+        .eq("id", challenge.id);
+
+      if (updateError) {
+        console.error("Update failed:", updateError);
+      }
     }
   }
 
