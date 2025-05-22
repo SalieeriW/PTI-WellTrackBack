@@ -132,7 +132,8 @@ app.get("/:id", async (c) => {
     .select("meta, name")
     .gte("created_at", new Date(new Date().setHours(0, 0, 0, 0)).toISOString())
     .eq("user_id", id)
-    .eq("completed", true);
+    .eq("completed", true)
+    .eq("metric", "time");
 
   if (challengesError) {
     return c.json({ error: challengesError.message }, 500);
